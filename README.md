@@ -24,6 +24,8 @@ It runs through the **MuAPI platform** (`api.muapi.ai`) with local **Python** an
 
 > **Ask your agent:** “Make me a Zack D Films-style short explaining what happens when you swallow gum.”
 
+> **Want to reduce generation costs?** See the [local-first Wan workflow](LOW_COST.md) for local scripts, voice, captions, FFmpeg, and opt-in Wan 2.2 animation with a per-run cost cap.
+
 ## 🎬 Full demo
 
 The complete five-shot render is assembled with impact zooms and short fade, wipe, slide, and circle-open transitions:

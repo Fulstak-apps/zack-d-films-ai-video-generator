@@ -14,7 +14,7 @@ Seven new clips estimate to about $0.35, excluding retries and keyframe generati
 
 ## Setup
 
-1. Install Python 3.10+, FFmpeg, and Ollama. Pull a local model, for example `ollama pull llama3.2`.
+1. Install Python 3.10+, FFmpeg, and Ollama. Pull a local model, for example `ollama pull qwen3:4b`.
 2. From the repository root, install optional dependencies:
 
    ```sh
@@ -23,7 +23,7 @@ Seven new clips estimate to about $0.35, excluding retries and keyframe generati
    pip install -r requirements-low-cost.txt
    ```
 
-3. Copy `.env.example` to `.env`; export `REPLICATE_API_TOKEN` only when ready to request Wan animations. Keep secrets out of Git. Scripts read environment variables and do not auto-load .env.
+3. Copy `.env.example` to `.env`; set `OLLAMA_MODEL` to a model already installed locally. Export `REPLICATE_API_TOKEN` only when ready to request Wan animations. Keep secrets out of Git. Before each run, load the settings into your shell with `set -a; source .env; set +a` (scripts do not auto-load `.env`).
 
 ## Run
 
