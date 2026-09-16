@@ -19,6 +19,8 @@ Use 5-8 shots total, 30-50 seconds of spoken narration, short clear sentences, o
         "model": model,
         "stream": False,
         "format": "json",
+        "think": False,
+        "options": {"num_predict": 1400, "temperature": 0.2},
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
     request = urllib.request.Request(
