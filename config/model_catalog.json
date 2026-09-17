@@ -1,0 +1,14 @@
+{
+  "wan3": {
+    "provider": "replicate",
+    "model": "alibaba/wan-3",
+    "kind": "video",
+    "settings": {
+      "resolution": ["480p", "720p", "1080p"],
+      "duration_seconds": {"min": 2, "max": 30},
+      "aspect_ratio": ["9:16", "16:9", "1:1"]
+    },
+    "inputs": {"start_frame": {"required": true, "max": 1}},
+    "defaults": {"resolution": "480p", "duration_seconds": 4, "aspect_ratio": "9:16"}
+  }
+}

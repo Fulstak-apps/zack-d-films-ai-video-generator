@@ -1,0 +1,18 @@
+{
+  "project_name": "dc_mayor_sting_wan3",
+  "topic": "The D.C. mayor caught in an FBI sting",
+  "aspect_ratio": "9:16",
+  "style_preset": "zackd_3d_stylized",
+  "beats": [
+    {"beat_id":"beat_1","narration":"In 1990, D.C. mayor Marion Barry was powerful—and federal agents were watching.","shots":[{"shot_id":"beat_1_a","duration_sec":4,"scene_description":"Mayor leaving city hall while investigators watch from an unmarked car","camera_move":"tracking","zoom_impact":false}]},
+    {"beat_id":"beat_2","narration":"Investigators arranged a hotel meeting with a cooperating witness.","shots":[{"shot_id":"beat_2_a","duration_sec":4,"scene_description":"Mayor arriving at a 1990s hotel entrance for a secret meeting","camera_move":"tilt_up","zoom_impact":false}]},
+    {"beat_id":"beat_3","narration":"Inside, they quietly placed a hidden camera in the room.","shots":[{"shot_id":"beat_3_a","duration_sec":4,"scene_description":"Investigator concealing a tiny camera inside a bedside lamp","camera_move":"macro_push","zoom_impact":false}]},
+    {"beat_id":"beat_4","narration":"Barry arrived, and the conversation shifted toward drugs.","shots":[{"shot_id":"beat_4_a","duration_sec":4,"scene_description":"Mayor greeting a cooperating witness at a hotel table","camera_move":"dolly_in","zoom_impact":false}]},
+    {"beat_id":"beat_5","narration":"The surveillance camera kept recording every tense second.","shots":[{"shot_id":"beat_5_a","duration_sec":4,"scene_description":"Close view of surveillance lamp recording a tense hotel conversation, no drug use shown","camera_move":"slow_pan","zoom_impact":true}]},
+    {"beat_id":"beat_6","narration":"Then federal agents rushed in and arrested the sitting mayor.","shots":[{"shot_id":"beat_6_a","duration_sec":4,"scene_description":"Federal agents entering hotel room as mayor stands with hands visible","camera_move":"shaky_push_in","zoom_impact":true}]},
+    {"beat_id":"beat_7","narration":"The arrest footage spread across television news almost immediately.","shots":[{"shot_id":"beat_7_a","duration_sec":4,"scene_description":"Reporters and television cameras gathering outside the hotel after the arrest","camera_move":"pull_out","zoom_impact":false}]},
+    {"beat_id":"beat_8","narration":"Barry was later convicted on a cocaine-possession charge.","shots":[{"shot_id":"beat_8_a","duration_sec":4,"scene_description":"Courthouse steps and legal papers suggesting a conviction, no readable text","camera_move":"lateral_pan","zoom_impact":false}]},
+    {"beat_id":"beat_9","narration":"He served six months in prison, and many thought his career was over.","shots":[{"shot_id":"beat_9_a","duration_sec":4,"scene_description":"Prison cell door closing on a distant silhouette behind iron bars","camera_move":"pull_back","zoom_impact":false}]},
+    {"beat_id":"beat_10","narration":"But voters elected him mayor again, turning scandal into an extraordinary comeback.","shots":[{"shot_id":"beat_10_a","duration_sec":4,"scene_description":"Political comeback rally with fictionalized public official stepping onto a stage as Washington supporters cheer","camera_move":"orbit_left","zoom_impact":false}]}
+  ]
+}
