@@ -4,6 +4,7 @@ import argparse
 import json
 import shutil
 import subprocess
+import textwrap
 from pathlib import Path
 
 
@@ -19,7 +20,21 @@ def read_srt(path):
         if len(lines) < 3 or "-->" not in lines[1]:
             continue
         start, end = (part.strip() for part in lines[1].split("-->"))
-        entries.append((seconds(start), seconds(end), "\n".join(lines[2:])))
+        raw = " ".join(line.strip() for line in lines[2:])
+        words = raw.split()
+        # Keep burned captions readable on a phone and inside the Shorts safe area.
+        chunks = []
+        current = []
+        for word in words:
+            candidate = " ".join(current + [word])
+            if current and (len(current) >= 5 or len(candidate) > 32):
+                chunks.append(" ".join(current))
+                current = [word]
+            else:
+                current.append(word)
+        if current:
+            chunks.append(" ".join(current))
+        entries.append((seconds(start), seconds(end), "\n".join(chunks[:2])))
     return entries
 
 
@@ -55,7 +70,7 @@ def burn_captions(ffmpeg, ffprobe, video, audio, srt, output):
         "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
         "/System/Library/Fonts/Helvetica.ttc",
     ) if Path(p).is_file()), None)
-    font = ImageFont.truetype(font_path, max(26, round(width * 0.058))) if font_path else ImageFont.load_default()
+    font = ImageFont.truetype(font_path, max(32, round(width * 0.052))) if font_path else ImageFont.load_default()
 
     decoder = subprocess.Popen(
         [ffmpeg, "-v", "error", "-i", str(video), "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
@@ -84,7 +99,8 @@ def burn_captions(ffmpeg, ffprobe, video, audio, srt, output):
                                                align="center", spacing=8, stroke_width=3)
                 text_width = bbox[2] - bbox[0]
                 x = max(12, (width - text_width) // 2)
-                y = height - max(150, round(height * 0.14)) - (bbox[3] - bbox[1])
+                safe_bottom = max(220, round(height * 0.18))
+                y = height - safe_bottom - (bbox[3] - bbox[1])
                 draw.multiline_text((x, y), entries[0][2], font=font, fill="white",
                                     align="center", spacing=8, stroke_width=3, stroke_fill="black")
                 raw = image.tobytes()
