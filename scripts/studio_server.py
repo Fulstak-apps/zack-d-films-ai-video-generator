@@ -47,7 +47,8 @@ def run_project(project_id):
 
     def worker():
         env = load_env()
-        command = ["python3", str(ROOT / "scripts/wan_clips.py"), str(project), "--max-cost-usd", "2.00", "--yes"]
+        python = str(ROOT / "venv/bin/python") if (ROOT / "venv/bin/python").exists() else "python3"
+        command = [python, str(ROOT / "scripts/wan_clips.py"), str(project), "--max-cost-usd", "2.00", "--yes"]
         process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, text=True)
         lines = []
