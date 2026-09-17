@@ -30,6 +30,16 @@ function toast(message) {
   setTimeout(() => $('#toast').style.display = 'none', 4500);
 }
 
+$('#preflight').onclick = async () => {
+  if (!selected) return toast('Create or select a project first');
+  try {
+    const result = await api('/api/preflight', {project: selected});
+    const failed = result.checks.filter(check => !check.ok);
+    $('#notice').innerHTML = `<strong>${result.ok ? 'Ready for review' : 'Needs attention'}</strong> · ${result.checks.map(check => `${check.ok ? '✓' : '!' } ${esc(check.message)}`).join(' · ')}`;
+    toast(result.ok ? 'Preflight passed' : `${failed.length} preflight check${failed.length === 1 ? '' : 's'} need attention`);
+  } catch (error) { toast(error.message); }
+};
+
 function current() {
   return projects.find(project => project.id === selected);
 }
