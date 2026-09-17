@@ -36,6 +36,7 @@ The repository includes a local, prompt-first studio at `http://127.0.0.1:8787`.
 - regenerate one weak scene without losing the previous clip;
 - browse portrait assets, favorites, finished films, and generation history;
 - finish locally with narration, Whisper captions, FFmpeg, and a portrait quality gate.
+- plan a complete storyboard locally with Ollama, run a preflight check for missing or repeated shots, and create up to 20 batch storyboards without spending credits;
 
 Start it with:
 

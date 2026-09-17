@@ -145,6 +145,35 @@ def plan_project(path, topic):
         raise ValueError('The local planner returned no scenes')
     return detail(path)
 
+def preflight_project(path):
+    """Return actionable local checks before any paid generation or export."""
+    info = detail(path)
+    checks = []
+    scenes = info['scenes']
+    prompts = [s for s in scenes if str(s.get('scene_description', '')).strip()]
+    missing = [s['shot_id'] for s in scenes if not str(s.get('scene_description', '')).strip()]
+    ready = [s for s in scenes if s.get('video')]
+    checks.append({'id':'portrait','ok': True, 'message':'Project is locked to 9:16 portrait output'})
+    checks.append({'id':'prompts','ok': not missing, 'message': 'Every scene has an action prompt' if not missing else f'{len(missing)} scene(s) need action prompts'})
+    checks.append({'id':'variety','ok': len({str(s.get('scene_description','')).strip().lower() for s in prompts}) == len(prompts), 'message':'No duplicate scene prompts detected' if len({str(s.get("scene_description","")).strip().lower() for s in prompts}) == len(prompts) else 'Duplicate scene prompts detected; vary the action and location'})
+    checks.append({'id':'frames','ok': not (MODELS[info['settings']['model']]['inputs'].get('start_frame', {}).get('required') and any(not s.get('image') for s in scenes if not s.get('video'))), 'message':'Required start frames are present' if not any(not s.get('image') for s in scenes if not s.get('video')) else 'Some unfinished scenes need portrait start frames'})
+    checks.append({'id':'clips','ok': bool(ready) or bool(missing), 'message': f'{len(ready)}/{len(scenes)} clips ready; generation remains opt-in'})
+    return {'project': info['id'], 'ok': all(item['ok'] for item in checks), 'checks': checks, 'missing_prompts': missing, 'estimate': info['estimate']}
+
+def batch_create(items):
+    created=[]
+    for item in items[:20]:
+        name=str(item.get('name','')).strip()[:100]
+        prompt=str(item.get('prompt','')).strip()[:5000]
+        if not name: continue
+        slug=re.sub('[^a-z0-9]+','_',name.lower()).strip('_')[:50] or 'story'
+        path=OUT/(slug+'_'+uuid.uuid4().hex[:6])
+        count=max(1,min(30,int(item.get('count',10))))
+        save(path/'beats.json',{'project_name':name,'topic':prompt or name,'aspect_ratio':'9:16','beats':[{'beat_id':f'beat_{i}','narration':'','shots':[{'shot_id':f'beat_{i}_a','scene_description':prompt if i==1 else '','camera_move':'slow push in','duration_sec':4}]} for i in range(1,count+1)]})
+        created.append(detail(path))
+    if not created: raise ValueError('Add at least one named batch topic')
+    return created
+
 def start_job(path, action, shot_id=None):
     with LOCK:
         if STATE['running']: raise ValueError('A studio job is already running')
@@ -371,10 +400,14 @@ class Handler(BaseHTTPRequestHandler):
                     path=OUT/(slug+'_'+uuid.uuid4().hex[:6])
                     save(path/'beats.json',{'project_name':name,'topic':prompt or name,'aspect_ratio':'9:16','beats':[{'beat_id':f'beat_{i}','narration':'','shots':[{'shot_id':f'beat_{i}_a','scene_description':prompt if i==1 else '','camera_move':'slow push in','duration_sec':4}]} for i in range(1,count+1)]})
                     return self.send_json(detail(path))
+                if action=='/api/batch':
+                    return self.send_json({'projects': batch_create(data.get('items', []))})
                 path=project_path(data.get('project',''))
                 if STATE['running'] and STATE['project']==data['project']: raise ValueError('Wait for this project’s current job before editing')
                 if action=='/api/plan':
                     return self.send_json(plan_project(path, data.get('topic','')))
+                if action=='/api/preflight':
+                    return self.send_json(preflight_project(path))
                 if action=='/api/settings':
                     incoming=data['settings']; model=MODELS.get(incoming.get('model'))
                     if not model or model['workflow'] != 'scene_generation' or incoming.get('resolution') not in model['resolutions']: raise ValueError('Unsupported model settings')
