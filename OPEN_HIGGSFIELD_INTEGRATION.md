@@ -9,6 +9,16 @@ This project adopts the useful workflow ideas without copying source code becaus
 - Wan generation remains explicitly portrait-first and uses a start-frame role for every scene.
 - Local narration, captions, assembly, and quality checks remain free.
 
+## Built-in local studio
+
+The project now includes its own browser studio. It keeps the Replicate credential on the local server and provides project selection, missing-scene generation, live logs, and a gallery for finished exports:
+
+```bash
+python scripts/studio_server.py
+```
+
+Open `http://127.0.0.1:8787`. Generation still uses Replicate billing; the interface itself has no subscription cost.
+
 Run the ledger before generating clips:
 
 ```bash
