@@ -1,0 +1,71 @@
+{
+  "wan3": {
+    "provider": "replicate",
+    "model": "alibaba/wan-3",
+    "kind": "video",
+    "settings": {
+      "resolution": ["480p", "720p", "1080p"],
+      "duration_seconds": {"min": 2, "max": 30},
+      "aspect_ratio": ["9:16", "16:9", "1:1"]
+    },
+    "inputs": {"start_frame": {"required": false, "max": 1}},
+    "pricing": {"480p": {"amount": 0.05, "unit": "second"}, "720p": {"amount": 0.10, "unit": "second"}, "1080p": {"amount": 0.20, "unit": "second"}},
+    "defaults": {"resolution": "480p", "duration_seconds": 4, "aspect_ratio": "9:16"}
+  },
+  "wan22_fast": {
+    "provider": "replicate",
+    "model": "wan-video/wan-2.2-i2v-fast",
+    "kind": "video",
+    "settings": {
+      "resolution": ["480p"],
+      "duration_seconds": {"fixed": 5},
+      "aspect_ratio": ["9:16"]
+    },
+    "inputs": {"start_frame": {"required": true, "max": 1}},
+    "pricing": {"480p": {"amount": 0.05, "unit": "clip"}},
+    "defaults": {"resolution": "480p", "duration_seconds": 5, "aspect_ratio": "9:16"}
+  },
+  "wan27_videoedit": {
+    "provider": "replicate",
+    "model": "wan-video/wan-2.7-videoedit",
+    "kind": "video",
+    "workflow": "video_edit",
+    "capabilities": ["edit-video", "preserve-motion", "reference-image", "portrait-output"],
+    "settings": {
+      "resolution": ["720p", "1080p"],
+      "duration_seconds": {"min": 2, "max": 10},
+      "aspect_ratio": ["9:16", "auto"]
+    },
+    "inputs": {
+      "source_video": {"required": true, "max_seconds": 10},
+      "prompt": {"required": true},
+      "reference_image": {"required": false, "max": 1}
+    },
+    "pricing": {
+      "720p": {"amount": 0.10, "unit": "second"},
+      "1080p": {"amount": 0.10, "unit": "second"}
+    },
+    "defaults": {"resolution": "720p", "duration_seconds": 4, "aspect_ratio": "9:16"}
+  },
+  "wan22_animate": {
+    "provider": "replicate",
+    "model": "wan-video/wan-2.2-animate-animation",
+    "kind": "video",
+    "workflow": "motion_transfer",
+    "capabilities": ["motion-transfer", "character-animation", "portrait-output"],
+    "settings": {
+      "resolution": ["480", "720"],
+      "duration_seconds": {"min": 2, "max": 60},
+      "aspect_ratio": ["9:16"]
+    },
+    "inputs": {
+      "source_video": {"required": true},
+      "character_image": {"required": true, "max": 1}
+    },
+    "pricing": {
+      "480": {"amount": 0.003, "unit": "second"},
+      "720": {"amount": 0.003, "unit": "second"}
+    },
+    "defaults": {"resolution": "480", "duration_seconds": 4, "aspect_ratio": "9:16"}
+  }
+}

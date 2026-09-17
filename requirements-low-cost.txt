@@ -1,0 +1,4 @@
+# Needed only for Wan generation and local Whisper captions.
+replicate>=1.0.0
+faster-whisper>=1.1.0
+pillow>=10.0.0
