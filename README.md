@@ -5,8 +5,8 @@
 
 <p>
   <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/MuAPI-Powered-0052FF?style=for-the-badge" alt="Powered by MuAPI">
-  <img src="https://img.shields.io/badge/Veo%203.1-Motion-8A2BE2?style=for-the-badge" alt="Veo 3.1 motion">
+  <img src="https://img.shields.io/badge/Replicate-Wan%20video-111111?style=for-the-badge" alt="Replicate Wan video">
+  <img src="https://img.shields.io/badge/Vertical-9%3A16-8A2BE2?style=for-the-badge" alt="Vertical 9:16 video">
 </p>
 <p>
   <img src="https://img.shields.io/badge/Agent%20Skill-Claude%20Code%20%C2%B7%20Codex-d97757?style=for-the-badge" alt="Agent skill">
@@ -20,11 +20,32 @@
 
 **Zack D Films AI Video Generator** is an agent-native production pipeline for fast, curiosity-driven 3D shorts. Give your coding agent one topic and it can plan the story, build consistent character and anatomy references, render stylized keyframes, animate them, generate narration, and assemble a vertical `final.mp4` with punchy edits.
 
-It runs through the **MuAPI platform** (`api.muapi.ai`) with local **Python** and **ffmpeg**, and can be used from Claude Code, Codex, Cursor, Antigravity, or any agent that can follow `SKILL.md`.
+The original agent workflow remains compatible with the **MuAPI platform** (`api.muapi.ai`), while this branch adds a local **Python**/**ffmpeg** studio that routes motion through Replicate's Wan models. It can be used from Claude Code, Codex, Cursor, Antigravity, or any agent that can follow `SKILL.md`.
 
 > **Ask your agent:** “Make me a Zack D Films-style short explaining what happens when you swallow gum.”
 
-> **Want to reduce generation costs?** See the [local-first Wan workflow](LOW_COST.md) for local scripts, voice, captions, FFmpeg, and opt-in Wan 2.2 animation with a per-run cost cap.
+> **Want to reduce generation costs?** See the [local-first Wan workflow](LOW_COST.md) for local scripts, voice, captions, FFmpeg, and opt-in Replicate animation with a per-run cost cap.
+
+## Local video studio
+
+The repository includes a local, prompt-first studio at `http://127.0.0.1:8787`. It is designed for the same fast workflow as a hosted generative-video workspace while keeping the finishing steps on your machine:
+
+- describe a new shot and optionally attach a portrait reference frame;
+- choose Wan 3 for prompt-to-video or image-to-video, or Wan 2.2 Fast for the fixed five-second low-cost image-to-video path;
+- edit a storyboard scene's prompt, narration, and camera direction;
+- regenerate one weak scene without losing the previous clip;
+- browse portrait assets, favorites, finished films, and generation history;
+- finish locally with narration, Whisper captions, FFmpeg, and a portrait quality gate.
+
+Start it with:
+
+```bash
+python3 -m venv venv
+venv/bin/pip install -r requirements.txt
+venv/bin/python scripts/studio_server.py
+```
+
+Open [http://127.0.0.1:8787](http://127.0.0.1:8787). Set `REPLICATE_API_TOKEN` in `.env` before starting a paid generation. The studio does not print or expose the token, and every generation requires an explicit confirmation plus a cost cap.
 
 ## 🎬 Full demo
 

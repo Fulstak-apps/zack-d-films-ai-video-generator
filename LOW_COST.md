@@ -8,7 +8,7 @@ This adds a local-first alternative to the default provider workflow. It retains
 - TTS: macOS `say` or a locally installed Piper voice; no hosted TTS charge.
 - Captions: faster-whisper on CPU; no hosted transcription charge.
 - Assembly: FFmpeg; no API charge.
-- Motion: Replicate's official `wan-video/wan-2.2-i2v-fast` image-to-video model. Replicate currently lists this as $0.05 per 480p generation. Provider pricing and inputs can change; check the [model page](https://replicate.com/wan-video/wan-2.2-i2v-fast) before running. Keyframes are still required: reuse images or generate them with local ComfyUI to avoid the original MuAPI image-generation charge.
+- Motion: Replicate's `wan-video/wan-2.2-i2v-fast` image-to-video model or Alibaba's `alibaba/wan-3` model. The studio estimates Wan 2.2 Fast at $0.05 per 480p clip, while Wan 3 is priced per second ($0.05/sec at 480p, $0.10/sec at 720p, and $0.20/sec at 1080p on the model page). Provider pricing and inputs can change; check the [Wan 2.2 page](https://replicate.com/wan-video/wan-2.2-i2v-fast) and [Wan 3 page](https://replicate.com/alibaba/wan-3) before running. Wan 2.2 Fast needs a portrait start frame; Wan 3 can use a prompt alone or an optional start frame. Reuse images or generate them with local ComfyUI to avoid the original MuAPI image-generation charge.
 
 Seven new clips estimate to about $0.35, excluding retries and keyframe generation. Actual charges are determined by Replicate. Existing non-empty clips are skipped.
 
@@ -18,8 +18,8 @@ Seven new clips estimate to about $0.35, excluding retries and keyframe generati
 2. From the repository root, install optional dependencies:
 
    ```sh
-   python3 -m venv .venv
-   source .venv/bin/activate
+   python3 -m venv venv
+   source venv/bin/activate
    pip install -r requirements-low-cost.txt
    ```
 
@@ -47,7 +47,26 @@ python3 scripts/finish_local.py out/my_short --captions
 
 Output: `out/my_short/final_captioned.mp4`. Omit `--captions` to mux voice without burning captions.
 
-The cost guard estimates missing clips times `WAN_CLIP_COST_USD` (default `0.05`), refuses to run over the per-run cap, and requires `--yes`. Retries are not automatic. Check actual billing in Replicate and review factual accuracy and generated clips before publishing.
+## Studio
+
+For the browser workspace, start the local server from the repository root:
+
+```sh
+venv/bin/python scripts/studio_server.py
+```
+
+Then open <http://127.0.0.1:8787>. The studio loads `REPLICATE_API_TOKEN` from the local `.env`, but never sends the file to the browser or writes it into job logs. It only starts a paid request after you click Generate and confirm the displayed estimate. Build final video runs TTS, captions, FFmpeg assembly, and the quality gate locally.
+
+The cost guard reads the selected model, resolution, and duration from the catalog, refuses to run over the per-run cap, and requires `--yes`. Retries are not automatic. Check actual billing in Replicate and review factual accuracy and generated clips before publishing.
+
+### Clip Lab models
+
+The studio's **Remix** action is deliberately separate from scene generation because these models take an existing video rather than a storyboard frame:
+
+- `wan-video/wan-2.7-videoedit` changes a 2–10 second clip from a natural-language instruction while preserving its movement. The catalog estimates $0.10 per output second.
+- `wan-video/wan-2.2-animate-animation` copies motion from an existing clip onto a supplied character image. The catalog estimates $0.003 per source second and requires the character image.
+
+Both actions back up the current scene clip in `versions/<job-id>/previous.mp4` before replacing it. The [Wan 2.7 VideoEdit schema](https://replicate.com/wan-video/wan-2.7-videoedit/api/schema) and [Wan 2.2 Animate schema](https://replicate.com/wan-video/wan-2.2-animate-animation/api/schema) document the provider inputs and current pricing.
 
 ## Limitations
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Generate shot clips from existing keyframes with Replicate's Wan 2.2 Fast I2V."""
+"""Generate storyboard shot clips with the supported Replicate Wan scene models."""
 import argparse
 import json
 import os
 from pathlib import Path
 
-MODEL = "wan-video/wan-2.2-i2v-fast"
+MODEL = os.environ.get("WAN_MODEL", "alibaba/wan-3")
 DEFAULT_CLIP_COST = 0.05
 
 
@@ -33,7 +33,7 @@ def main():
         output = project / "clips" / f"{shot_id}.mp4"
         if output.is_file() and output.stat().st_size:
             continue
-        if not image.is_file():
+        if not image.is_file() and MODEL != "alibaba/wan-3":
             parser.error(f"missing keyframe: {image}")
         try:
             from PIL import Image
@@ -44,11 +44,22 @@ def main():
                     f"keyframe must be portrait (height > width): {image} is {width}x{height}; "
                     "generate one 9:16 scene per shot, never crop a storyboard sheet"
                 )
-        except ImportError:
+        except (ImportError, FileNotFoundError):
             pass
         todo.append((shot, image, output))
 
-    per_clip = float(os.environ.get("WAN_CLIP_COST_USD", DEFAULT_CLIP_COST))
+    duration = int(os.environ.get("WAN_DURATION_SECONDS", "4"))
+    resolution = os.environ.get("WAN_RESOLUTION", "480p")
+    if MODEL == "alibaba/wan-3":
+        if resolution not in ("480p", "720p", "1080p") or not 2 <= duration <= 30:
+            parser.error("invalid Wan 3 settings")
+        per_clip = duration * {"480p": 0.05, "720p": 0.10, "1080p": 0.20}[resolution]
+    elif MODEL == "wan-video/wan-2.2-i2v-fast":
+        if resolution != "480p":
+            parser.error("Wan 2.2 Fast currently supports 480p in this studio")
+        per_clip = DEFAULT_CLIP_COST
+    else:
+        parser.error("unsupported model")
     estimate = len(todo) * per_clip
     if estimate > args.max_cost_usd:
         parser.error(f"estimated {estimate:.2f} USD exceeds cap {args.max_cost_usd:.2f} USD")
@@ -72,14 +83,24 @@ def main():
             f"{shot.get('scene_description', '')}"
         )
         print(f"Generating {shot['shot_id']} (run estimate {estimate:.2f} USD)")
-        with image.open("rb") as image_file:
-            result = client.run(MODEL, input={
-                "image": image_file,
+        image_file = image.open("rb") if image.is_file() else None
+        try:
+            inputs = {
                 "prompt": prompt,
-                "num_frames": int(os.environ.get("WAN_NUM_FRAMES", "81")),
-                "resolution": "480p",
-                "frames_per_second": 16,
-            })
+                "duration": int(os.environ.get("WAN_DURATION_SECONDS", "4")),
+                "resolution": os.environ.get("WAN_RESOLUTION", "480p"),
+                "aspect_ratio": "9:16",
+            }
+            if image_file:
+                inputs["image"] = image_file
+            if MODEL == "wan-video/wan-2.2-i2v-fast":
+                inputs.pop("duration")
+                inputs.pop("aspect_ratio")
+                inputs.update(num_frames=81, frames_per_second=16)
+            result = client.run(MODEL, input=inputs)
+        finally:
+            if image_file:
+                image_file.close()
         url = getattr(result, "url", None) or (str(result) if result else "")
         if not url.startswith("http"):
             raise RuntimeError(f"Wan returned no downloadable video for {shot['shot_id']}: {result!r}")
