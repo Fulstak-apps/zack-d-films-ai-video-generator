@@ -123,6 +123,28 @@ def projects():
         except (ValueError,KeyError,TypeError): continue
     return result
 
+
+def plan_project(path, topic):
+    """Replace a storyboard with a local Ollama plan, retaining a recoverable backup."""
+    topic = str(topic or '').strip()[:5000]
+    if not topic:
+        raise ValueError('Give the planner a topic or opening prompt')
+    python = str(ROOT / 'venv/bin/python') if (ROOT / 'venv/bin/python').exists() else sys.executable
+    backup = path / 'versions' / f'plan_{uuid.uuid4().hex[:10]}' / 'beats.json'
+    shutil.copy2(path / 'beats.json', backup)
+    env = load_env()
+    result = subprocess.run(
+        [python, '-u', str(ROOT / 'scripts/local_script.py'), str(path), '--topic', topic],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=300,
+    )
+    if result.returncode:
+        message = (result.stderr or result.stdout or 'Local storyboard planning failed').strip().splitlines()[-1]
+        raise ValueError(message)
+    planned = read(path / 'beats.json', {})
+    if not planned.get('beats'):
+        raise ValueError('The local planner returned no scenes')
+    return detail(path)
+
 def start_job(path, action, shot_id=None):
     with LOCK:
         if STATE['running']: raise ValueError('A studio job is already running')
@@ -347,10 +369,12 @@ class Handler(BaseHTTPRequestHandler):
                     prompt=str(data.get('prompt','')).strip()[:5000]
                     slug=re.sub('[^a-z0-9]+','_',name.lower()).strip('_')[:50] or 'story'
                     path=OUT/(slug+'_'+uuid.uuid4().hex[:6])
-                    save(path/'beats.json',{'project_name':name,'topic':name,'aspect_ratio':'9:16','beats':[{'beat_id':f'beat_{i}','narration':'','shots':[{'shot_id':f'beat_{i}_a','scene_description':prompt if i==1 else '','camera_move':'slow push in','duration_sec':4}]} for i in range(1,count+1)]})
+                    save(path/'beats.json',{'project_name':name,'topic':prompt or name,'aspect_ratio':'9:16','beats':[{'beat_id':f'beat_{i}','narration':'','shots':[{'shot_id':f'beat_{i}_a','scene_description':prompt if i==1 else '','camera_move':'slow push in','duration_sec':4}]} for i in range(1,count+1)]})
                     return self.send_json(detail(path))
                 path=project_path(data.get('project',''))
                 if STATE['running'] and STATE['project']==data['project']: raise ValueError('Wait for this project’s current job before editing')
+                if action=='/api/plan':
+                    return self.send_json(plan_project(path, data.get('topic','')))
                 if action=='/api/settings':
                     incoming=data['settings']; model=MODELS.get(incoming.get('model'))
                     if not model or model['workflow'] != 'scene_generation' or incoming.get('resolution') not in model['resolutions']: raise ValueError('Unsupported model settings')

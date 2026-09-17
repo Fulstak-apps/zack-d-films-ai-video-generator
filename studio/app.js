@@ -277,21 +277,23 @@ $('#grid').onclick = event => {
   }
 };
 
-$('#createForm').onsubmit = async event => {
-  event.preventDefault();
+async function createStoryboard(plan) {
   try {
     const project = await api('/api/create', {
       name: $('#name').value,
       count: Number($('#count').value),
       prompt: $('#createPrompt').value
     });
+    if (plan) await api('/api/plan', {project: project.id, topic: $('#createPrompt').value || $('#name').value});
     selected = project.id;
     $('#create').close();
     changeView('scenes');
     await load();
-    toast('Storyboard created. Open a scene to begin.');
+    toast(plan ? 'Storyboard planned locally. Review every scene before generating.' : 'Storyboard created. Open a scene to begin.');
   } catch (error) { toast(error.message); }
-};
+}
+$('#createForm').onsubmit = event => { event.preventDefault(); createStoryboard(false); };
+$('#planProject').onclick = () => createStoryboard(true);
 
 $('#sceneForm').onsubmit = async event => {
   event.preventDefault();
