@@ -59,3 +59,19 @@ The cost guard estimates missing clips times `WAN_CLIP_COST_USD` (default `0.05`
 ## Environment variables
 
 See [.env.example](.env.example). The only required secret for Wan is `REPLICATE_API_TOKEN`; Ollama runs locally. See the [Wan model page](https://replicate.com/wan-video/wan-2.2-i2v-fast) for current pricing and input schema.
+## Required production order
+
+Generate one clean **portrait 9:16 keyframe per shot**. Do not crop a storyboard sheet into production keyframes.
+
+For every Short, run narration before animation assembly so each scene is timed to its spoken beat:
+
+```bash
+python scripts/local_tts.py out/my_story
+python scripts/wan_clips.py out/my_story --max-cost-usd 0.50 --yes
+python scripts/assemble.py out/my_story
+python scripts/local_captions.py out/my_story --model base
+python scripts/finish_local.py out/my_story --captions
+python scripts/quality_gate.py out/my_story
+```
+
+`quality_gate.py` refuses exports that are not 1080x1920, have missing audio, end before narration, or contain captions that do not exactly match the approved script.

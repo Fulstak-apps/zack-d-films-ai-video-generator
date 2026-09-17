@@ -35,6 +35,17 @@ def main():
             continue
         if not image.is_file():
             parser.error(f"missing keyframe: {image}")
+        try:
+            from PIL import Image
+            with Image.open(image) as keyframe:
+                width, height = keyframe.size
+            if height <= width:
+                parser.error(
+                    f"keyframe must be portrait (height > width): {image} is {width}x{height}; "
+                    "generate one 9:16 scene per shot, never crop a storyboard sheet"
+                )
+        except ImportError:
+            pass
         todo.append((shot, image, output))
 
     per_clip = float(os.environ.get("WAN_CLIP_COST_USD", DEFAULT_CLIP_COST))
@@ -52,7 +63,7 @@ def main():
     except ImportError:
         parser.error("install dependencies with: pip install -r requirements-low-cost.txt")
 
-    client = replicate.Client(api_token=os.environ["REPLICATE_API_TOKEN"])
+    client = replicate.Client(api_token=os.environ["REPLICATE_API_TOKEN"], timeout=300)
     (project / "clips").mkdir(parents=True, exist_ok=True)
     import urllib.request
     for shot, image, output in todo:

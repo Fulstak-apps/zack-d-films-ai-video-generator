@@ -16,25 +16,43 @@ def main():
     args = parser.parse_args()
     project = Path(args.project_dir)
     data = json.loads((project / "beats.json").read_text(encoding="utf-8"))
-    narration = " ".join(b.get("narration", "").strip() for b in data.get("beats", [])).strip()
-    if not narration:
+    beats = [b.get("narration", "").strip() for b in data.get("beats", [])]
+    if not any(beats):
         parser.error("beats.json contains no narration")
     outdir = project / "audio"
     outdir.mkdir(parents=True, exist_ok=True)
     engine = args.engine
     if engine == "auto":
         engine = "say" if shutil.which("say") else "piper"
-    output = outdir / ("narration.aiff" if engine == "say" else "narration.wav")
+    suffix = ".aiff" if engine == "say" else ".wav"
+    output = outdir / f"narration{suffix}"
+    beat_outputs = []
     if engine == "say":
         if not shutil.which("say"):
             parser.error("macOS 'say' was not found; use --engine piper")
-        subprocess.run(["say", "-o", str(output), narration], check=True)
+        for index, narration in enumerate(beats, 1):
+            if not narration:
+                continue
+            beat_output = outdir / f"beat_{index}{suffix}"
+            subprocess.run(["say", "-o", str(beat_output), narration], check=True)
+            beat_outputs.append(beat_output)
     else:
         executable = shutil.which("piper")
         if not executable or not args.voice:
             parser.error("Piper needs the piper executable and --voice / PIPER_VOICE_MODEL path")
-        subprocess.run([executable, "--model", args.voice, "--output_file", str(output)],
-                       input=narration, text=True, check=True)
+        for index, narration in enumerate(beats, 1):
+            if not narration:
+                continue
+            beat_output = outdir / f"beat_{index}{suffix}"
+            subprocess.run([executable, "--model", args.voice, "--output_file", str(beat_output)],
+                           input=narration, text=True, check=True)
+            beat_outputs.append(beat_output)
+    if not beat_outputs:
+        parser.error("no usable beat narration was generated")
+    concat = outdir / "narration.concat.txt"
+    concat.write_text("".join(f"file '{path.resolve()}'\n" for path in beat_outputs), encoding="utf-8")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", str(concat),
+                    "-c", "copy", str(output)], check=True)
     print(f"Saved local narration: {output}")
 
 

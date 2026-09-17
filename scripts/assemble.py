@@ -19,7 +19,7 @@ import sys
 CANVAS_WIDTH = 1080
 CANVAS_HEIGHT = 1920
 FRAME_RATE = 30
-DEFAULT_TRANSITION_DURATION = 0.35
+DEFAULT_TRANSITION_DURATION = 0.0
 VIDEO_CRF = 23
 AUDIO_BITRATE = "96k"
 TRANSITIONS = ("fade", "wipeleft", "slideleft", "circleopen")
@@ -52,6 +52,15 @@ def _duration(ffprobe, path):
     if duration <= 0:
         raise RuntimeError(f"Clip has no usable duration: {path}")
     return duration
+
+
+def _loop_to_duration(ffmpeg, source, duration, target):
+    """Make each scene exactly as long as its narration without speed changes."""
+    subprocess.run([
+        ffmpeg, "-y", "-v", "error", "-stream_loop", "-1", "-i", source,
+        "-t", _escape_filter_number(duration), "-vf", "fps=30,format=yuv420p",
+        "-an", "-c:v", "libx264", "-preset", "medium", "-crf", str(VIDEO_CRF), str(target),
+    ], check=True)
 
 
 def _has_audio(ffprobe, path):
@@ -229,15 +238,31 @@ def assemble_video(project_dir, test_mode=False, transition_duration=DEFAULT_TRA
         raise RuntimeError("Both ffmpeg and ffprobe must be installed and on PATH.")
 
     shots_to_assemble = []
-    for beat in data.get("beats", []):
-        for shot in beat.get("shots", []):
+    for beat_index, beat in enumerate(data.get("beats", []), 1):
+        narration_audio = next((
+            path for path in (os.path.join(project_dir, "audio", f"beat_{beat_index}.aiff"),
+                              os.path.join(project_dir, "audio", f"beat_{beat_index}.wav"))
+            if os.path.exists(path)
+        ), None)
+        if narration_audio is None:
+            raise FileNotFoundError(
+                f"Missing narration for beat {beat_index}; run scripts/local_tts.py before assembly."
+            )
+        narration_duration = _duration(ffprobe, narration_audio)
+        shots = beat.get("shots", [])
+        if not shots:
+            raise RuntimeError(f"Beat {beat_index} has no shots")
+        per_shot_duration = narration_duration / len(shots)
+        for shot_index, shot in enumerate(shots, 1):
             shot_id = shot["shot_id"]
             clip_path = os.path.join(clips_dir, f"{shot_id}.mp4")
             if not os.path.exists(clip_path):
                 raise FileNotFoundError(f"Missing clip for {shot_id}: {clip_path}")
+            prepared_path = os.path.join(project_dir, "clips", f"{shot_id}.timed.mp4")
+            _loop_to_duration(ffmpeg, clip_path, per_shot_duration, prepared_path)
             shots_to_assemble.append({
                 "id": shot_id,
-                "path": clip_path,
+                "path": prepared_path,
                 "zoom_impact": shot.get("zoom_impact", False),
                 "camera_move": shot.get("camera_move", "static"),
             })
@@ -302,7 +327,7 @@ def main():
         "--transition-duration",
         type=float,
         default=DEFAULT_TRANSITION_DURATION,
-        help="Duration in seconds for each transition (0 disables transitions)",
+        help="Duration in seconds for each transition; default is 0 to preserve narration timing",
     )
     parser.add_argument(
         "--test-mode",
